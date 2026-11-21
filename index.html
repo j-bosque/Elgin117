@@ -140,6 +140,8 @@
   .final-grid .fteam { background: var(--panel); border: 1px solid var(--gold-dark); border-radius: 10px; padding: 10px; }
   .final-grid input { width: 100%; background: #000; color: var(--gold-light); border: 1px solid var(--gold-dark);
     border-radius: 8px; padding: 8px; font-size: 1.2rem; text-align: center; margin-top: 6px; }
+  .scoremsg { font-weight: 800; letter-spacing: .06em; text-transform: uppercase; margin: 6px 0 10px; font-size: 1.1rem; }
+  .scoremsg.ok { color: var(--green); } .scoremsg.no { color: #ff8a7a; }
   .tag { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
   .tag.ok { color: var(--green); } .tag.no { color: #ff8a7a; }
 
@@ -372,11 +374,13 @@ function modalHTML() {
     body = `<div class="clue">${esc(clue.q)}</div>
       ${modal.done ? "" : `<div class="timer"><div id="timerbar"></div></div><div class="timer-label" id="timerlabel"></div>`}
       ${modal.revealed ? `<div class="answer">${esc(clue.a)}</div>` : ""}
+      ${modal.msg ? `<div class="scoremsg ${modal.msgOk ? "ok" : "no"}" role="status">${esc(modal.msg)}</div>` : ""}
       ${modal.done ? "" : `<div class="judge">${judge}</div>`}
       <div class="modal-actions">
         ${modal.done
-          ? `<button class="btn" data-act="closeclue">Back to Board</button>`
+          ? `${modal.snap ? `<button class="btn ghost" data-act="undo">Undo Last Score</button>` : ""}<button class="btn" data-act="closeclue">Back to Board</button>`
           : `${modal.revealed ? "" : `<button class="btn ghost" data-act="reveal">Reveal Answer</button>`}
+             ${modal.snap ? `<button class="btn ghost" data-act="undo">Undo Last Score</button>` : ""}
              ${!modal.touched ? `<button class="btn ghost" data-act="cancelclue">Return Clue to Board</button>` : ""}`}
       </div>`;
   }
@@ -389,8 +393,8 @@ function modalHTML() {
 function judgeTeam(i) {
   const locked = modal.locked.includes(i);
   return `<div class="jteam"><div class="jname">${esc(S.teams[i].name)}</div><div class="jbtns">
-    <button class="btn good" data-act="right" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} correct">✓</button>
-    <button class="btn danger" data-act="wrong" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} incorrect">✗</button></div></div>`;
+    <button class="btn good" data-act="right" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} correct">✓ Right</button>
+    <button class="btn danger" data-act="wrong" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} incorrect">✗ Wrong</button></div></div>`;
 }
 
 /* ---------- timer ---------- */
@@ -430,6 +434,13 @@ function lockWager() {
 }
 function judge(i, ok) {
   const t = S.teams[i];
+  const now = Date.now();
+  const key = i + ":" + ok;
+  if (modal.lastKey === key && now - modal.lastJudge < 600) return;   // ignore accidental double-taps on the same button
+  modal.lastKey = key; modal.lastJudge = now;
+  modal.snap = { scores: S.teams.map(x => x.score), control: S.control, locked: [...modal.locked], revealed: modal.revealed, done: modal.done };
+  modal.msg = ok ? `${t.name}: +${money(modal.value)}` : `${t.name}: -${money(modal.value)}`;
+  modal.msgOk = ok;
   modal.touched = true;
   if (ok) {
     t.score += modal.value; S.control = i; modal.revealed = true; modal.done = true; sfx.right(); stopTimer();
@@ -438,6 +449,15 @@ function judge(i, ok) {
     if (modal.dd || modal.locked.length === S.teams.length) { modal.revealed = true; modal.done = true; stopTimer(); }
   }
   save(); render();
+}
+function undoJudge() {
+  if (!modal || !modal.snap) return;
+  const sn = modal.snap;
+  S.teams.forEach((t, i) => t.score = sn.scores[i]);
+  S.control = sn.control; modal.locked = sn.locked; modal.revealed = sn.revealed; modal.done = sn.done;
+  modal.snap = null; modal.msg = "Last score undone"; modal.msgOk = true;
+  save(); render();
+  if (!modal.done) startTimer();
 }
 function revealAnswer() { modal.revealed = true; modal.done = true; modal.touched = true; stopTimer(); save(); render(); }
 function closeClue() { S.used[modal.key] = true; modal = null; stopTimer(); save(); render(); }
@@ -549,6 +569,7 @@ document.addEventListener("click", e => {
     case "right": judge(t, true); break;
     case "wrong": judge(t, false); break;
     case "reveal": revealAnswer(); break;
+    case "undo": undoJudge(); break;
     case "closeclue": closeClue(); break;
     case "cancelclue": cancelClue(); break;
     case "adj": S.teams[t].score += parseInt(el.dataset.d, 10); save(); render(); break;
