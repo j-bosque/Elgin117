@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masonic Jeopardy</title>
+<meta name="description" content="Masonic Jeopardy - a Masonic education quiz game for lodge nights.">
+<style>
+  :root {
+    --black: #070707;
+    --panel: #121008;
+    --panel-2: #1b170a;
+    --gold: #d4af37;
+    --gold-light: #f6dc82;
+    --gold-dark: #8a6d1c;
+    --red: #c0392b;
+    --green: #4caf50;
+    --text: #f1e6c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--black); color: var(--text);
+    font-family: Optima, Candara, "Segoe UI", Georgia, serif; }
+  body {
+    background:
+      radial-gradient(ellipse at 50% -10%, #2a2108 0%, transparent 60%),
+      var(--black);
+    min-height: 100vh;
+  }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--gold-light); outline-offset: 2px; }
+  .gold-text {
+    background: linear-gradient(180deg, var(--gold-light), var(--gold) 55%, var(--gold-dark));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* ---------- Header ---------- */
+  header.top { display: flex; align-items: center; justify-content: center; gap: 14px;
+    padding: 14px 12px 6px; position: relative; }
+  header.top h1 { margin: 0; font-family: Copperplate, "Copperplate Gothic Light", Georgia, serif;
+    font-size: clamp(1.6rem, 4.5vw, 3rem); letter-spacing: .12em; text-transform: uppercase; }
+  header.top svg { width: clamp(38px, 6vw, 64px); height: auto; flex: none; }
+  .top-tools { position: absolute; right: 12px; top: 12px; display: flex; gap: 8px; }
+  .icon-btn { background: transparent; color: var(--gold); border: 1px solid var(--gold-dark);
+    border-radius: 8px; padding: 6px 10px; font-size: .85rem; }
+  .icon-btn:hover { background: var(--panel-2); border-color: var(--gold); }
+  .tagline { text-align: center; color: var(--gold-dark); letter-spacing: .25em; font-size: .75rem;
+    text-transform: uppercase; margin: 0 0 10px; }
+
+  /* ---------- Setup ---------- */
+  .setup { max-width: 560px; margin: 24px auto; padding: 0 16px 40px; }
+  .card { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 2px solid var(--gold);
+    border-radius: 14px; padding: 22px; box-shadow: 0 0 40px rgba(212,175,55,.12); }
+  .card h2 { margin: 0 0 4px; color: var(--gold); letter-spacing: .08em; text-transform: uppercase; font-size: 1.15rem; }
+  .card p.sub { margin: 0 0 16px; color: #b9ab7c; font-size: .95rem; }
+  .field { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .field label { width: 70px; color: var(--gold); font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; }
+  .field input { flex: 1; background: #000; color: var(--gold-light); border: 1px solid var(--gold-dark);
+    border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 1.05rem; }
+  .row-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .btn { background: linear-gradient(180deg, var(--gold-light), var(--gold) 60%, var(--gold-dark));
+    color: #120d00; border: 0; border-radius: 10px; padding: 12px 20px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; font-size: .95rem; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+  .btn.ghost:hover { background: var(--panel-2); }
+  .btn.danger { background: linear-gradient(180deg, #e0685a, var(--red)); color: #fff; }
+  .btn.good { background: linear-gradient(180deg, #7ed17f, #3b8f3e); color: #06200a; }
+  .btn[disabled] { opacity: .35; cursor: not-allowed; filter: none; }
+  .note { margin-top: 18px; font-size: .8rem; color: #8f8359; line-height: 1.4; }
+
+  /* ---------- Board ---------- */
+  main.game { max-width: 1200px; margin: 0 auto; padding: 0 10px 24px; }
+  .board { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .cat { background: linear-gradient(180deg, var(--gold-light), var(--gold) 55%, var(--gold-dark));
+    color: #120d00; font-weight: 800; text-transform: uppercase; text-align: center;
+    display: flex; align-items: center; justify-content: center; padding: 8px 4px;
+    min-height: clamp(54px, 9vw, 92px); border-radius: 6px; letter-spacing: .05em;
+    font-size: clamp(.5rem, 1.6vw, 1.1rem); line-height: 1.15; overflow-wrap: break-word; }
+  .tile { background: radial-gradient(ellipse at 50% 30%, #1d1708, #0b0904);
+    color: var(--gold); border: 2px solid var(--gold-dark); border-radius: 6px;
+    min-height: clamp(52px, 10vw, 96px); font-family: Copperplate, Georgia, serif;
+    font-weight: 700; font-size: clamp(1.1rem, 3.6vw, 2.5rem);
+    text-shadow: 0 0 14px rgba(212,175,55,.35); transition: transform .12s, border-color .12s, box-shadow .12s; }
+  .tile:hover:not([disabled]) { border-color: var(--gold-light); transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(212,175,55,.28); }
+  .tile[disabled] { visibility: hidden; }
+  .board-actions { display: flex; justify-content: center; gap: 10px; margin: 12px 0 4px; flex-wrap: wrap; }
+
+  /* ---------- Scoreboard ---------- */
+  .scores { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .team { flex: 1 1 180px; max-width: 280px; background: var(--panel); border: 2px solid var(--gold-dark);
+    border-radius: 10px; padding: 10px 12px; text-align: center; position: relative; }
+  .team.control { border-color: var(--gold-light); box-shadow: 0 0 22px rgba(246,220,130,.35); }
+  .team .tname { color: var(--gold); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .team .tscore { font-family: Copperplate, Georgia, serif; font-size: clamp(1.4rem, 4vw, 2.2rem); color: var(--gold-light); }
+  .team .tscore.neg { color: #ff8a7a; }
+  .team .ctl { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold);
+    color: #120d00; font-size: .65rem; font-weight: 800; letter-spacing: .12em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .adj { display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+  .adj button { background: transparent; color: #8f8359; border: 1px solid #3a3115; border-radius: 6px;
+    font-size: .7rem; padding: 2px 8px; }
+  .adj button:hover { color: var(--gold); border-color: var(--gold-dark); }
+  .pick { color: #8f8359; font-size: .75rem; margin-top: 2px; }
+  .pick button { background: none; border: 0; color: var(--gold-dark); text-decoration: underline; font-size: .75rem; padding: 0; }
+
+  /* ---------- Modal ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.9); display: flex; align-items: center;
+    justify-content: center; padding: 14px; z-index: 50; animation: fade .2s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .modal { width: min(980px, 100%); max-height: 100%; overflow: auto;
+    background: radial-gradient(ellipse at 50% 0%, #251c06, #0a0803 70%);
+    border: 3px solid var(--gold); border-radius: 16px; padding: clamp(14px, 3vw, 30px);
+    box-shadow: 0 0 80px rgba(212,175,55,.25); text-align: center; }
+  .m-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--gold);
+    text-transform: uppercase; letter-spacing: .12em; font-size: clamp(.75rem, 2vw, 1rem); font-weight: 700; }
+  .dd-badge { background: var(--gold); color: #120d00; padding: 4px 12px; border-radius: 999px; font-weight: 900;
+    animation: pulse 1s infinite alternate; }
+  @keyframes pulse { to { box-shadow: 0 0 22px var(--gold-light); } }
+  .clue { font-size: clamp(1.3rem, 4.2vw, 2.7rem); line-height: 1.3; margin: clamp(16px, 4vw, 40px) 0;
+    color: var(--gold-light); text-transform: uppercase; letter-spacing: .03em; font-weight: 600; }
+  .answer { font-size: clamp(1.1rem, 3.2vw, 2rem); color: #fff; background: rgba(212,175,55,.14);
+    border: 1px dashed var(--gold); border-radius: 10px; padding: 12px; margin: 0 0 16px; }
+  .timer { height: 8px; background: #241d0a; border-radius: 99px; overflow: hidden; margin: 0 auto 6px; max-width: 520px; }
+  .timer > div { height: 100%; width: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold-light)); transition: width 1s linear; }
+  .timer-label { color: #8f8359; font-size: .75rem; letter-spacing: .1em; margin-bottom: 12px; }
+  .judge { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 10px 0; }
+  .judge .jteam { background: var(--panel); border: 1px solid var(--gold-dark); border-radius: 10px; padding: 8px 10px; }
+  .judge .jname { color: var(--gold); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+  .judge .jbtns { display: flex; gap: 6px; justify-content: center; }
+  .jbtns .btn { padding: 8px 14px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .wager-box { margin: 24px auto; max-width: 360px; }
+  .wager-box input { width: 100%; background: #000; color: var(--gold-light); border: 2px solid var(--gold);
+    border-radius: 10px; padding: 12px; font-size: 1.8rem; text-align: center; font-family: Copperplate, Georgia, serif; }
+  .wager-hint { color: #8f8359; font-size: .85rem; margin-top: 6px; }
+  .big-title { font-family: Copperplate, Georgia, serif; font-size: clamp(1.6rem, 5vw, 3.2rem); letter-spacing: .1em; text-transform: uppercase; margin: 10px 0; }
+  .winner { font-size: clamp(1.4rem, 4vw, 2.4rem); margin: 10px 0 18px; color: var(--gold-light); }
+  .final-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin: 14px 0; }
+  .final-grid .fteam { background: var(--panel); border: 1px solid var(--gold-dark); border-radius: 10px; padding: 10px; }
+  .final-grid input { width: 100%; background: #000; color: var(--gold-light); border: 1px solid var(--gold-dark);
+    border-radius: 8px; padding: 8px; font-size: 1.2rem; text-align: center; margin-top: 6px; }
+  .tag { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+  .tag.ok { color: var(--green); } .tag.no { color: #ff8a7a; }
+
+  /* sparkle */
+  .spark { position: fixed; top: -10px; width: 8px; height: 8px; background: var(--gold-light); transform: rotate(45deg);
+    animation: fall linear forwards; z-index: 60; pointer-events: none; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .2; } }
+
+  @media (max-width: 560px) {
+    .board { gap: 3px; }
+    .cat { font-size: .46rem; letter-spacing: 0; padding: 6px 2px; }
+    .top-tools { position: static; justify-content: center; margin-bottom: 6px; }
+    header.top { flex-direction: column; gap: 6px; }
+    .field label { width: 56px; font-size: .75rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =====================================================================
+   QUESTION BANK  — edit freely!
+   Each category has five clues worth $100 to $500.
+   Keep it to public, non-secret Masonic education (history, famous
+   Brethren, symbols that are published openly, lodge basics).
+   Answers are phrased as questions, Jeopardy style.
+   ===================================================================== */
+const CATEGORIES = [
+  { name: "Famous Brethren", clues: [
+    { q: "This first U.S. president was raised a Master Mason in Fredericksburg, Virginia, in 1753.", a: "Who is George Washington?" },
+    { q: "This Founding Father, inventor and printer was Provincial Grand Master of Pennsylvania in 1734.", a: "Who is Benjamin Franklin?" },
+    { q: "This Boston silversmith of the famous midnight ride served as Grand Master of Massachusetts in the 1790s.", a: "Who is Paul Revere?" },
+    { q: "This wartime British Prime Minister was initiated into Studholme Lodge in 1901.", a: "Who is Winston Churchill?" },
+    { q: "This U.S. president served as Grand Master of Missouri in 1940-41, before reaching the White House.", a: "Who is Harry S. Truman?" }
+  ]},
+  { name: "Tools & Symbols", clues: [
+    { q: "The square and compasses are most often shown with this letter in the center.", a: "What is G?" },
+    { q: "The beehive is a Masonic symbol of this hardworking insect's industry and cooperation.", a: "What is the bee?" },
+    { q: "Operative masons spread cement with this tool; Masons today use it as a symbol of brotherly affection.", a: "What is the trowel?" },
+    { q: "The Volume of the Sacred Law, the Square and this instrument make up the Three Great Lights.", a: "What are the Compasses?" },
+    { q: "A Mason's apron is traditionally made from the skin of this young animal, a symbol of innocence.", a: "What is a lamb (lambskin)?" }
+  ]},
+  { name: "Masonic History", clues: [
+    { q: "In this year, four London lodges formed the first Grand Lodge of England.", a: "What is 1717?" },
+    { q: "This Scottish-born minister published the Constitutions of the Free-Masons in 1723.", a: "Who is James Anderson?" },
+    { q: "He was the very first Grand Master of the first Grand Lodge, elected in 1717.", a: "Who is Anthony Sayer?" },
+    { q: "In 1813 the \"Antients\" united with these rivals to form the United Grand Lodge of England.", a: "Who are the \"Moderns\"?" },
+    { q: "Dating to about 1390, this poem is the oldest known Masonic manuscript, named for the Latin word for \"royal.\"", a: "What is the Regius Poem (Regius Manuscript)?" }
+  ]},
+  { name: "Illinois & Elgin", clues: [
+    { q: "On the roll of the Grand Lodge of Illinois, Elgin Lodge carries this number.", a: "What is 117?" },
+    { q: "The city of Elgin sits on the banks of this river.", a: "What is the Fox River?" },
+    { q: "Elgin was long famous for making these timepieces at the Elgin National Watch Company.", a: "What are watches?" },
+    { q: "The Grand Lodge of Illinois was organized in this year.", a: "What is 1840?" },
+    { q: "The Grand Lodge of Illinois was organized in this early Illinois state capital.", a: "What is Vandalia?" }
+  ]},
+  { name: "Appendant Bodies", clues: [
+    { q: "This fez-wearing fraternity, open to Master Masons, is famous for its hospitals for children.", a: "Who are the Shriners?" },
+    { q: "Open to Master Masons and their female relatives, this order was popularized by Rob Morris.", a: "What is the Order of the Eastern Star?" },
+    { q: "Founded in Kansas City in 1919, this youth order for young men is named for the last Grand Master of the Knights Templar.", a: "What is DeMolay?" },
+    { q: "In the United States, the Scottish Rite is divided into this many jurisdictions, Northern and Southern.", a: "What is two?" },
+    { q: "The York Rite's Royal Arch Chapter and Cryptic Council are joined by this chivalric body of Knights Templar.", a: "What is the Commandery?" }
+  ]},
+  { name: "Lodge Basics", clues: [
+    { q: "The presiding officer of a Blue Lodge is called the Worshipful this.", a: "What is the Master?" },
+    { q: "Entered Apprentice, Fellowcraft and this make up the three Blue Lodge degrees.", a: "What is Master Mason?" },
+    { q: "This officer records the minutes and handles the lodge's correspondence.", a: "Who is the Secretary?" },
+    { q: "This document from the Grand Lodge authorizes a lodge to meet and work.", a: "What is a charter?" },
+    { q: "Masons sometimes date documents with these Latin words meaning \"in the year of light.\"", a: "What is Anno Lucis?" }
+  ]}
+];
+
+const FINAL = {
+  category: "The Principal Tenets",
+  q: "Masons' principal tenets are Brotherly Love, Relief and this.",
+  a: "What is Truth?"
+};
+
+/* =====================================================================
+   GAME ENGINE
+   ===================================================================== */
+const VALUES = [100, 200, 300, 400, 500];
+const STORE_KEY = "masonicJeopardy.v1";
+const THINK_SECONDS = 30;
+
+let S = null;          // saved game state
+let modal = null;      // transient clue state
+let timerId = null;
+let muted = false;
+try { muted = localStorage.getItem("masonicJeopardy.muted") === "1"; } catch (e) {}
+
+const $app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString();
+const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+const LOGO = `<svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M50 6 L16 90 M50 6 L84 90"/><path d="M26 66 Q50 80 74 66" stroke-width="3"/>
+  <path d="M50 94 L8 52 M50 94 L92 52"/>
+  <text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#f6dc82" stroke="none">G</text>
+</svg>`;
+
+/* ---------- audio ---------- */
+let actx = null;
+function tone(freq, dur, type = "sine", when = 0, vol = .15) {
+  if (muted) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    const t = actx.currentTime + when;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const sfx = {
+  open: () => { tone(440, .12, "triangle"); tone(660, .18, "triangle", .1); },
+  right: () => { tone(523, .15, "triangle"); tone(659, .15, "triangle", .12); tone(784, .3, "triangle", .24); },
+  wrong: () => { tone(160, .45, "sawtooth", 0, .12); },
+  dd: () => { [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, .2, "square", i * .1, .08)); },
+  win: () => { [523, 659, 784, 1046, 784, 1046, 1318].forEach((f, i) => tone(f, .25, "triangle", i * .14, .12)); }
+};
+
+/* ---------- persistence ---------- */
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+function loadSaved() { try { const r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function clearSaved() { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
+
+/* ---------- state ---------- */
+function newGame(names) {
+  S = {
+    phase: "board",
+    teams: names.map(n => ({ name: n, score: 0 })),
+    control: 0,
+    used: {},
+    dd: `${rand(0, CATEGORIES.length - 1)}-${rand(1, 4)}`,   // Daily Double hides in rows 2-5
+    final: null
+  };
+  modal = null; save(); render();
+}
+
+function clueCount() { return Object.keys(S.used).length; }
+const totalClues = () => CATEGORIES.length * VALUES.length;
+
+/* ---------- rendering ---------- */
+function header() {
+  return `<header class="top">${LOGO}<h1 class="gold-text">Masonic Jeopardy</h1>${LOGO}
+    <div class="top-tools">
+      <button class="icon-btn" data-act="mute" aria-label="Toggle sound">${muted ? "🔇 Sound off" : "🔊 Sound on"}</button>
+      ${S && S.phase !== "setup" ? `<button class="icon-btn" data-act="newgame">New Game</button>` : ""}
+    </div></header>
+    <p class="tagline">Light · Learning · Brotherhood</p>`;
+}
+
+function render() {
+  if (!S) { renderSetup(); return; }
+  if (S.phase === "board") renderBoard();
+  else if (S.phase === "final" || S.phase === "done") renderBoard(); // board stays behind the final modal
+}
+
+function renderSetup() {
+  const saved = loadSaved();
+  $app.innerHTML = `${header()}
+  <div class="setup"><div class="card">
+    <h2>Gather the Teams</h2>
+    <p class="sub">Two to four teams or players. Pass the gavel to whoever is first to pick.</p>
+    ${[0, 1, 2, 3].map(i => `<div class="field"><label for="t${i}">Team ${i + 1}</label>
+       <input id="t${i}" maxlength="22" placeholder="${i < 2 ? "Required" : "Optional"}" value="${["Senior Warden", "Junior Warden", "", ""][i]}"></div>`).join("")}
+    <div class="row-actions">
+      <button class="btn" data-act="start">Open the Lodge</button>
+      ${saved && saved.phase ? `<button class="btn ghost" data-act="resume">Resume Saved Game</button>` : ""}
+    </div>
+    <p class="note">Questions use publicly available Masonic history, symbolism and lodge basics only. Nothing esoteric or ritual. Edit the question bank at the top of this file's script to make it your own.</p>
+  </div></div>`;
+}
+
+function renderBoard() {
+  const cells = [];
+  CATEGORIES.forEach((c, ci) => cells.push(`<div class="cat">${esc(c.name)}</div>`));
+  VALUES.forEach((v, ri) => CATEGORIES.forEach((c, ci) => {
+    const key = `${ci}-${ri}`;
+    cells.push(`<button class="tile" data-act="clue" data-c="${ci}" data-r="${ri}" ${S.used[key] ? "disabled" : ""}
+      aria-label="${esc(c.name)} for $${v}">$${v}</button>`);
+  }));
+
+  const teams = S.teams.map((t, i) => `
+    <div class="team ${i === S.control ? "control" : ""}">
+      ${i === S.control ? `<div class="ctl">PICKS NEXT</div>` : ""}
+      <div class="tname">${esc(t.name)}</div>
+      <div class="tscore ${t.score < 0 ? "neg" : ""}">${money(t.score)}</div>
+      <div class="adj"><button data-act="adj" data-t="${i}" data-d="-100" aria-label="Subtract 100 from ${esc(t.name)}">-100</button>
+        <button data-act="adj" data-t="${i}" data-d="100" aria-label="Add 100 to ${esc(t.name)}">+100</button></div>
+      ${i !== S.control ? `<div class="pick"><button data-act="control" data-t="${i}">give control</button></div>` : ""}
+    </div>`).join("");
+
+  const remaining = totalClues() - clueCount();
+  $app.innerHTML = `${header()}
+  <main class="game">
+    <div class="board">${cells.join("")}</div>
+    <div class="board-actions">
+      <button class="btn ghost" data-act="final">${remaining === 0 ? "★ Final Question ★" : `Skip to Final Question (${remaining} left)`}</button>
+    </div>
+    <div class="scores">${teams}</div>
+  </main>${modalHTML()}`;
+  if (modal && modal.stage === "clue" && !modal.done) updateTimerDOM();
+}
+
+function modalHTML() {
+  if (S.phase === "final" || S.phase === "done") return finalHTML();
+  if (!modal) return "";
+  const cat = CATEGORIES[modal.c], clue = cat.clues[modal.r], team = S.teams[S.control];
+  let body = "";
+
+  if (modal.stage === "wager") {
+    const maxW = Math.max(team.score, 500);
+    body = `<div class="big-title gold-text">Daily Double!</div>
+      <p><b>${esc(team.name)}</b>, how much will you wager?</p>
+      <div class="wager-box"><input id="wager" type="number" min="5" max="${maxW}" step="5" value="${Math.min(maxW, Math.max(5, Math.floor(team.score / 2 / 5) * 5 || 500))}" aria-label="Wager">
+      <div class="wager-hint">Wager up to ${money(maxW)}</div></div>
+      <div class="modal-actions"><button class="btn" data-act="lockwager">Lock It In</button>
+      <button class="btn ghost" data-act="cancelclue">Back to board</button></div>`;
+  } else {
+    const judge = modal.dd
+      ? judgeTeam(S.control)
+      : S.teams.map((_, i) => judgeTeam(i)).join("");
+    body = `<div class="clue">${esc(clue.q)}</div>
+      ${modal.done ? "" : `<div class="timer"><div id="timerbar"></div></div><div class="timer-label" id="timerlabel"></div>`}
+      ${modal.revealed ? `<div class="answer">${esc(clue.a)}</div>` : ""}
+      ${modal.done ? "" : `<div class="judge">${judge}</div>`}
+      <div class="modal-actions">
+        ${modal.done
+          ? `<button class="btn" data-act="closeclue">Back to Board</button>`
+          : `${modal.revealed ? "" : `<button class="btn ghost" data-act="reveal">Reveal Answer</button>`}
+             ${!modal.touched ? `<button class="btn ghost" data-act="cancelclue">Return Clue to Board</button>` : ""}`}
+      </div>`;
+  }
+
+  return `<div class="overlay" role="dialog" aria-modal="true"><div class="modal">
+    <div class="m-head"><span>${esc(cat.name)} · ${modal.dd && modal.stage === "clue" ? money(modal.value) : "$" + VALUES[modal.r]}</span>
+    ${modal.dd ? `<span class="dd-badge">DAILY DOUBLE</span>` : ""}</div>${body}</div></div>`;
+}
+
+function judgeTeam(i) {
+  const locked = modal.locked.includes(i);
+  return `<div class="jteam"><div class="jname">${esc(S.teams[i].name)}</div><div class="jbtns">
+    <button class="btn good" data-act="right" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} correct">✓</button>
+    <button class="btn danger" data-act="wrong" data-t="${i}" ${locked ? "disabled" : ""} aria-label="${esc(S.teams[i].name)} incorrect">✗</button></div></div>`;
+}
+
+/* ---------- timer ---------- */
+function startTimer() {
+  stopTimer(); modal.left = THINK_SECONDS;
+  timerId = setInterval(() => {
+    if (!modal || modal.done) { stopTimer(); return; }
+    if (modal.left > 0) { modal.left--; updateTimerDOM(); }
+    if (modal.left === 0) { stopTimer(); tone(220, .5, "square", 0, .1); }
+  }, 1000);
+}
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+function updateTimerDOM() {
+  const bar = document.getElementById("timerbar"), lab = document.getElementById("timerlabel");
+  if (!bar || !modal) return;
+  const left = modal.left == null ? THINK_SECONDS : modal.left;
+  bar.style.width = (left / THINK_SECONDS * 100) + "%";
+  if (lab) lab.textContent = left > 0 ? `${left}s` : "TIME!";
+}
+
+/* ---------- clue actions ---------- */
+function openClue(c, r) {
+  const key = `${c}-${r}`;
+  if (S.used[key]) return;
+  const dd = S.dd === key;
+  modal = { c, r, key, dd, stage: dd ? "wager" : "clue", revealed: false, done: false, locked: [], touched: false, value: VALUES[r] };
+  if (dd) sfx.dd(); else sfx.open();
+  render();
+  if (!dd) startTimer();
+}
+function lockWager() {
+  const team = S.teams[S.control], maxW = Math.max(team.score, 500);
+  let w = parseInt(document.getElementById("wager").value, 10);
+  if (isNaN(w) || w < 5) w = 5;
+  if (w > maxW) w = maxW;
+  modal.value = w; modal.stage = "clue"; render(); startTimer();
+}
+function judge(i, ok) {
+  const t = S.teams[i];
+  modal.touched = true;
+  if (ok) {
+    t.score += modal.value; S.control = i; modal.revealed = true; modal.done = true; sfx.right(); stopTimer();
+  } else {
+    t.score -= modal.value; modal.locked.push(i); sfx.wrong();
+    if (modal.dd || modal.locked.length === S.teams.length) { modal.revealed = true; modal.done = true; stopTimer(); }
+  }
+  save(); render();
+}
+function revealAnswer() { modal.revealed = true; modal.done = true; modal.touched = true; stopTimer(); save(); render(); }
+function closeClue() { S.used[modal.key] = true; modal = null; stopTimer(); save(); render(); }
+function cancelClue() { modal = null; stopTimer(); render(); }
+
+/* ---------- final question ---------- */
+function startFinal() {
+  S.phase = "final";
+  S.final = { stage: "wager", wagers: S.teams.map(() => 0), results: S.teams.map(() => null) };
+  modal = null; stopTimer(); save(); render();
+}
+function finalHTML() {
+  const F = S.final;
+  if (S.phase === "done") {
+    const top = Math.max(...S.teams.map(t => t.score));
+    const winners = S.teams.filter(t => t.score === top);
+    return `<div class="overlay"><div class="modal">
+      <div class="m-head"><span>Final Standings</span><span></span></div>
+      <div class="big-title gold-text">${winners.length > 1 ? "A Tie!" : "Well Done, Brother!"}</div>
+      <div class="winner">${winners.map(w => esc(w.name)).join(" & ")} ${winners.length > 1 ? "share" : "wins with"} ${money(top)}</div>
+      <div class="final-grid">${[...S.teams].sort((a, b) => b.score - a.score).map(t =>
+        `<div class="fteam"><div class="jname" style="color:var(--gold)">${esc(t.name)}</div><div class="tscore gold-text" style="font-size:2rem">${money(t.score)}</div></div>`).join("")}</div>
+      <div class="modal-actions"><button class="btn" data-act="newgame">Play Again</button></div></div></div>`;
+  }
+  const head = `<div class="m-head"><span>Final Question</span><span class="dd-badge">${esc(FINAL.category)}</span></div>`;
+  if (F.stage === "wager") {
+    return `<div class="overlay"><div class="modal">${head}
+      <div class="big-title gold-text">${esc(FINAL.category)}</div>
+      <p>Each team secretly wagers up to its score. Teams at $0 or below sit this one out.</p>
+      <div class="final-grid">${S.teams.map((t, i) => `<div class="fteam"><div class="jname" style="color:var(--gold)">${esc(t.name)}</div>
+        ${t.score > 0 ? `<div class="wager-hint">Max ${money(t.score)}</div>
+        <input type="number" id="fw${i}" min="0" max="${t.score}" step="5" value="0" aria-label="${esc(t.name)} wager">`
+        : `<div class="wager-hint">Not eligible</div>`}</div>`).join("")}</div>
+      <div class="modal-actions"><button class="btn" data-act="finalclue">Show the Clue</button>
+      <button class="btn ghost" data-act="finalback">Back to Board</button></div></div></div>`;
+  }
+  const done = S.teams.every((t, i) => t.score <= 0 || F.results[i] !== null);
+  return `<div class="overlay"><div class="modal">${head}
+    <div class="clue">${esc(FINAL.q)}</div>
+    ${F.stage === "judge" ? `<div class="answer">${esc(FINAL.a)}</div>` : ""}
+    ${F.stage === "clue" ? `<div class="modal-actions"><button class="btn" data-act="finalreveal">Reveal Answer</button></div>` : `
+      <div class="final-grid">${S.teams.map((t, i) => t.score <= 0
+        ? `<div class="fteam"><div class="jname" style="color:var(--gold)">${esc(t.name)}</div><div class="wager-hint">Sat out</div></div>`
+        : `<div class="fteam"><div class="jname" style="color:var(--gold)">${esc(t.name)}</div>
+          <div class="wager-hint">Wagered ${money(F.wagers[i])}</div>
+          ${F.results[i] === null
+            ? `<div class="jbtns" style="margin-top:8px"><button class="btn good" data-act="fright" data-t="${i}" aria-label="${esc(t.name)} correct">✓</button>
+               <button class="btn danger" data-act="fwrong" data-t="${i}" aria-label="${esc(t.name)} incorrect">✗</button></div>`
+            : `<div class="tag ${F.results[i] ? "ok" : "no"}" style="margin-top:8px">${F.results[i] ? "Correct" : "Incorrect"}</div>`}
+        </div>`).join("")}</div>
+      <div class="modal-actions"><button class="btn" data-act="finish" ${done ? "" : "disabled"}>See Final Standings</button></div>`}
+  </div></div>`;
+}
+function finalClue() {
+  S.final.wagers = S.teams.map((t, i) => {
+    if (t.score <= 0) return 0;
+    const el = document.getElementById("fw" + i);
+    let w = parseInt(el && el.value, 10);
+    if (isNaN(w) || w < 0) w = 0;
+    return Math.min(w, t.score);
+  });
+  S.final.stage = "clue"; save(); render();
+}
+function finalJudge(i, ok) {
+  const F = S.final;
+  F.results[i] = ok;
+  S.teams[i].score += ok ? F.wagers[i] : -F.wagers[i];
+  ok ? sfx.right() : sfx.wrong();
+  save(); render();
+}
+function finish() {
+  S.phase = "done"; save(); render(); sfx.win(); sparkle();
+}
+function sparkle() {
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.animationDuration = (2 + Math.random() * 3) + "s";
+    s.style.animationDelay = (Math.random() * 1.5) + "s";
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 6500);
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act, t = parseInt(el.dataset.t, 10);
+  switch (act) {
+    case "start": {
+      const names = [0, 1, 2, 3].map(i => document.getElementById("t" + i).value.trim()).filter(Boolean);
+      if (names.length < 2) { alert("Please enter at least two team names."); return; }
+      newGame(names); break;
+    }
+    case "resume": S = loadSaved(); modal = null; render(); break;
+    case "newgame":
+      if (S && S.phase === "done" || confirm("Start a new game? Current scores will be lost.")) {
+        clearSaved(); S = null; modal = null; stopTimer(); render();
+      }
+      break;
+    case "mute":
+      muted = !muted;
+      try { localStorage.setItem("masonicJeopardy.muted", muted ? "1" : "0"); } catch (err) {}
+      render(); break;
+    case "clue": openClue(parseInt(el.dataset.c, 10), parseInt(el.dataset.r, 10)); break;
+    case "lockwager": lockWager(); break;
+    case "right": judge(t, true); break;
+    case "wrong": judge(t, false); break;
+    case "reveal": revealAnswer(); break;
+    case "closeclue": closeClue(); break;
+    case "cancelclue": cancelClue(); break;
+    case "adj": S.teams[t].score += parseInt(el.dataset.d, 10); save(); render(); break;
+    case "control": S.control = t; save(); render(); break;
+    case "final": startFinal(); break;
+    case "finalback": S.phase = "board"; S.final = null; save(); render(); break;
+    case "finalclue": finalClue(); break;
+    case "finalreveal": S.final.stage = "judge"; save(); render(); break;
+    case "fright": finalJudge(t, true); break;
+    case "fwrong": finalJudge(t, false); break;
+    case "finish": finish(); break;
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && modal && !modal.touched && modal.stage !== "done") cancelClue();
+  if (e.key === "Enter" && modal && modal.stage === "wager" && document.activeElement && document.activeElement.id === "wager") lockWager();
+});
+
+render();
+</script>
+</body>
+</html>
