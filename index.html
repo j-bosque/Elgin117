@@ -641,7 +641,7 @@ function emblemInner() {
   </g>`;
 }
 const LOGO = `<svg viewBox="0 0 200 200" aria-hidden="true">${emblemInner()}</svg>`;
-const CREST = `<img class="crest" src="logo.png" alt="Elgin Lodge No. 117 logo">`;
+const CREST = `<img class="crest" src="logo.svg" alt="Elgin Lodge No. 117 logo">`;
 
 /* ---------- audio ---------- */
 let actx = null;
@@ -699,7 +699,7 @@ function render() {
 function renderSetup() {
   $app.innerHTML = `${header()}
   <div class="setup"><div class="card" style="text-align:center">
-    <img class="lodgelogo" src="logo.png" alt="Elgin Lodge No. 117 logo">
+    <img class="lodgelogo" src="logo.svg" alt="Elgin Lodge No. 117 logo">
     <h2>Welcome to the Lodge</h2>
     <p class="sub">One screen hosts the game. Everyone else joins from their own phone with a room code, up to 10 players.</p>
     <div class="row-actions" style="justify-content:center;flex-direction:column;align-items:stretch">
