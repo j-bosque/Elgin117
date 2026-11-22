@@ -2,7 +2,7 @@
 Lodge Education
 
 ## Masonic Jeopardy
-A black-and-gold Jeopardy-style quiz game for lodge education nights, played by up to 10 people on their own phones.
+A Masonic-blue Jeopardy-style quiz game for lodge education nights, played by up to 10 people on their own phones.
 Open `index.html` in any browser (or host it with GitHub Pages) - no install needed.
 
 1. On the big screen (laptop/TV), tap **Host a Game**. A 4-letter room code appears.
