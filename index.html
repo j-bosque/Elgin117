@@ -150,6 +150,37 @@
     animation: fall linear forwards; z-index: 60; pointer-events: none; }
   @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .2; } }
 
+
+  /* ---------- Masonic ornament ---------- */
+  .checker { height: 20px; background: repeating-conic-gradient(var(--gold) 0 25%, #0a0a0a 0 50%) 0 0 / 20px 20px;
+    border-top: 2px solid var(--gold-dark); border-bottom: 2px solid var(--gold-dark); margin: 0 auto 12px; max-width: 1200px; opacity: .95; }
+  .checker.foot { margin: 16px auto 0; }
+  .temple { display: grid; grid-template-columns: clamp(36px, 4.6vw, 60px) minmax(0, 1fr) clamp(36px, 4.6vw, 60px); gap: 12px; }
+  .temple .center { min-width: 0; }
+  .pillar { display: flex; flex-direction: column; filter: drop-shadow(0 0 14px rgba(212,175,55,.25)); }
+  .pillar .cap, .pillar .plinth { margin: 0 -5px; background: linear-gradient(180deg, var(--gold-light), var(--gold) 50%, var(--gold-dark));
+    border-radius: 5px; position: relative; }
+  .pillar .cap { height: 34px; display: flex; align-items: center; justify-content: center; border-bottom: 4px solid #5a4510; }
+  .pillar .cap span { font-family: Copperplate, Georgia, serif; font-weight: 900; color: #120d00; font-size: 1.25rem; }
+  .pillar .cap::before { content: ""; position: absolute; left: 12%; right: 12%; top: -7px; height: 9px; border-radius: 99px 99px 0 0;
+    background: radial-gradient(circle at 50% 100%, var(--gold-light), var(--gold-dark)); }
+  .pillar .shaft { flex: 1; margin: 0 2px; background: repeating-linear-gradient(90deg, #4a390e 0 2px, var(--gold-dark) 2px 5px, var(--gold) 5px 9px, var(--gold-light) 9px 11px, var(--gold) 11px 14px, #4a390e 14px 16px); }
+  .pillar .plinth { height: 22px; border-top: 4px solid #5a4510; }
+  .orn { display: flex; align-items: center; gap: 12px; justify-content: center; color: var(--gold); margin: 8px 0 14px; }
+  .orn::before, .orn::after { content: ""; height: 1px; width: 70px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .orn::after { transform: scaleX(-1); }
+  .orn svg { width: 22px; height: 22px; }
+  .emblem { display: block; width: 110px; margin: 0 auto 4px; filter: drop-shadow(0 0 18px rgba(212,175,55,.45)); }
+  .lodge-line { text-align: center; color: var(--gold); letter-spacing: .22em; font-size: .8rem; text-transform: uppercase; margin: 0; }
+  .modal { position: relative; padding-top: calc(clamp(14px, 3vw, 30px) + 22px); }
+  .modal::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 16px;
+    background: repeating-conic-gradient(var(--gold) 0 25%, #0a0a0a 0 50%) 0 0 / 16px 16px; border-bottom: 2px solid var(--gold-dark); }
+  .modal::after { content: "✦"; position: absolute; top: 4px; left: 50%; transform: translateX(-50%); background: #0a0803; color: var(--gold-light);
+    padding: 0 10px; line-height: 16px; font-size: .9rem; }
+  .cat { box-shadow: inset 0 0 0 2px rgba(18,13,0,.35), 0 2px 10px rgba(212,175,55,.2); }
+  @media (max-width: 760px) {
+    .temple { grid-template-columns: minmax(0, 1fr); } .pillar { display: none; }
+  }
   @media (max-width: 560px) {
     .board { gap: 3px; }
     .cat { font-size: .46rem; letter-spacing: 0; padding: 6px 2px; }
@@ -242,6 +273,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString();
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
+const STAR = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1l2.6 7.4L22.5 9l-6.2 4.7 2.3 7.6L12 16.8 5.4 21.3l2.3-7.6L1.5 9l7.9-.6z"/></svg>`;
 const LOGO = `<svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
   <path d="M50 6 L16 90 M50 6 L84 90"/><path d="M26 66 Q50 80 74 66" stroke-width="3"/>
   <path d="M50 94 L8 52 M50 94 L92 52"/>
@@ -297,7 +329,9 @@ function header() {
       <button class="icon-btn" data-act="mute" aria-label="Toggle sound">${muted ? "🔇 Sound off" : "🔊 Sound on"}</button>
       ${S && S.phase !== "setup" ? `<button class="icon-btn" data-act="newgame">New Game</button>` : ""}
     </div></header>
-    <p class="tagline">Light · Learning · Brotherhood</p>`;
+    <p class="lodge-line">Elgin Lodge No. 117 · A.F. &amp; A.M.</p>
+    <div class="orn">${STAR}<span class="tagline" style="margin:0">Light · Learning · Brotherhood</span>${STAR}</div>
+    <div class="checker"></div>`;
 }
 
 function render() {
@@ -310,8 +344,9 @@ function renderSetup() {
   const saved = loadSaved();
   $app.innerHTML = `${header()}
   <div class="setup"><div class="card">
-    <h2>Gather the Teams</h2>
-    <p class="sub">Two to four teams or players. Pass the gavel to whoever is first to pick.</p>
+    ${LOGO.replace("<svg ", '<svg class="emblem" ')}
+    <h2 style="text-align:center">Gather the Teams</h2>
+    <p class="sub" style="text-align:center">Two to four teams or players. Pass the gavel to whoever is first to pick.</p>
     ${[0, 1, 2, 3].map(i => `<div class="field"><label for="t${i}">Team ${i + 1}</label>
        <input id="t${i}" maxlength="22" placeholder="${i < 2 ? "Required" : "Optional"}" value="${["Senior Warden", "Junior Warden", "", ""][i]}"></div>`).join("")}
     <div class="row-actions">
@@ -343,12 +378,18 @@ function renderBoard() {
 
   const remaining = totalClues() - clueCount();
   $app.innerHTML = `${header()}
-  <main class="game">
+  <main class="game"><div class="temple">
+    <div class="pillar" aria-hidden="true"><div class="cap"><span>B</span></div><div class="shaft"></div><div class="plinth"></div></div>
+    <div class="center">
     <div class="board">${cells.join("")}</div>
     <div class="board-actions">
       <button class="btn ghost" data-act="final">${remaining === 0 ? "★ Final Question ★" : `Skip to Final Question (${remaining} left)`}</button>
     </div>
     <div class="scores">${teams}</div>
+    </div>
+    <div class="pillar" aria-hidden="true"><div class="cap"><span>J</span></div><div class="shaft"></div><div class="plinth"></div></div>
+    </div>
+    <div class="checker foot"></div>
   </main>${modalHTML()}`;
   if (modal && modal.stage === "clue" && !modal.done) updateTimerDOM();
 }
