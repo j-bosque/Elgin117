@@ -240,6 +240,18 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="goldMetal" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff6c2"/><stop offset=".22" stop-color="#f2d268"/><stop offset=".48" stop-color="#b98a22"/>
+    <stop offset=".72" stop-color="#e9c64f"/><stop offset="1" stop-color="#6f5112"/></linearGradient>
+  <linearGradient id="gmLight" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff2a8"/><stop offset="1" stop-color="#d9ae3a"/></linearGradient>
+  <linearGradient id="gmDark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8861f"/><stop offset="1" stop-color="#6a4d10"/></linearGradient>
+  <radialGradient id="goldRadial" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#d9ae3a"/><stop offset="1" stop-color="#6a4d10"/></radialGradient>
+  <radialGradient id="darkDisc" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="#2b210a"/><stop offset="1" stop-color="#050402"/></radialGradient>
+  <radialGradient id="sclera" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#fffaf0"/><stop offset=".7" stop-color="#e6d8ae"/><stop offset="1" stop-color="#a88a45"/></radialGradient>
+  <radialGradient id="iris" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#f6cf5a"/><stop offset=".5" stop-color="#b9781a"/><stop offset="1" stop-color="#3a1f06"/></radialGradient>
+  <filter id="gShadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.2" stdDeviation="1.1" flood-color="#000" flood-opacity=".8"/></filter>
+</defs></svg>
 <div id="app"></div>
 
 <script src="peerjs.min.js"></script>
@@ -536,31 +548,105 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const money = n => (n < 0 ? "-$" : "$") + Math.abs(n).toLocaleString();
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
-const STAR = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1l2.6 7.4L22.5 9l-6.2 4.7 2.3 7.6L12 16.8 5.4 21.3l2.3-7.6L1.5 9l7.9-.6z"/></svg>`;
+const f1 = n => n.toFixed(1);
+const pts = arr => arr.map(p => f1(p[0]) + "," + f1(p[1])).join(" ");
+function taper(x1, y1, x2, y2, w1, w2) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
+  return [[x1 + nx * w1 / 2, y1 + ny * w1 / 2], [x2 + nx * w2 / 2, y2 + ny * w2 / 2], [x2 - nx * w2 / 2, y2 - ny * w2 / 2], [x1 - nx * w1 / 2, y1 - ny * w1 / 2]];
+}
+/* Faceted five-point star: alternating light/dark facets give a beveled, engraved look */
+function starSVG() {
+  const cx = 12, cy = 12.6, R = 11, r = 4.7, tips = [], ins = [];
+  for (let i = 0; i < 5; i++) {
+    const a = (-90 + i * 72) * Math.PI / 180, b = (-90 + i * 72 + 36) * Math.PI / 180;
+    tips.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); ins.push([cx + r * Math.cos(b), cy + r * Math.sin(b)]);
+  }
+  let facets = "";
+  for (let i = 0; i < 5; i++) {
+    const prevIn = ins[(i + 4) % 5];
+    facets += `<polygon points="${pts([[cx, cy], prevIn, tips[i]])}" fill="url(#gmLight)"/><polygon points="${pts([[cx, cy], tips[i], ins[i]])}" fill="url(#gmDark)"/>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" filter="url(#gShadow)"><g stroke="#3d2d08" stroke-width=".35" stroke-linejoin="round">${facets}</g></svg>`;
+}
+const STAR = starSVG();
 
-const EYE = `<svg class="eye" viewBox="0 0 100 90" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
-  <g stroke="#8a6d1c" stroke-width="2">${[-170,-150,-130,-110,-90,-70,-50,-30,-10].map(a => { const r = a * Math.PI / 180; return `<line x1="50" y1="60" x2="${(50 + 62 * Math.cos(r)).toFixed(1)}" y2="${(60 + 62 * Math.sin(r)).toFixed(1)}"/>`; }).join("")}</g>
-  <path d="M50 8 L93 84 L7 84 Z" fill="#0a0803" stroke="#d4af37" stroke-width="4"/>
-  <path d="M28 60 Q50 40 72 60 Q50 80 28 60 Z" stroke="#f6dc82" stroke-width="3"/>
-  <circle cx="50" cy="60" r="8" fill="#d4af37" stroke="none"/><circle cx="50" cy="60" r="3.2" fill="#0a0803" stroke="none"/>
-</svg>`;
-const SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/>${[0,45,90,135,180,225,270,315].map(a => { const r = a * Math.PI / 180; return `<line x1="${(12 + 7.5 * Math.cos(r)).toFixed(1)}" y1="${(12 + 7.5 * Math.sin(r)).toFixed(1)}" x2="${(12 + 10.5 * Math.cos(r)).toFixed(1)}" y2="${(12 + 10.5 * Math.sin(r)).toFixed(1)}"/>`; }).join("")}</svg>`;
-const MOON = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+function eyeSVG() {
+  let rays = "";
+  for (let k = 0, a = -178; a <= -2; a += 7.5, k++) {
+    const long = k % 2 === 0, R = long ? 66 : 48, r0 = 22, w = 2.2;
+    const A = (a - w) * Math.PI / 180, B = (a + w) * Math.PI / 180, M = a * Math.PI / 180;
+    rays += `<polygon points="${pts([[60 + r0 * Math.cos(A), 74 + r0 * Math.sin(A)], [60 + R * Math.cos(M), 74 + R * Math.sin(M)], [60 + r0 * Math.cos(B), 74 + r0 * Math.sin(B)]])}" fill="url(#goldMetal)" opacity="${long ? .9 : .6}"/>`;
+  }
+  return `<svg class="eye" viewBox="0 0 120 100" aria-hidden="true" filter="url(#gShadow)">
+    ${rays}
+    <path d="M60 12 L109 96 L11 96 Z" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M60 24 L98 90 L22 90 Z" fill="url(#darkDisc)" stroke="#8a6a1a" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M60 14.5 L106 94" stroke="#fff6c2" stroke-width="1" opacity=".7"/>
+    <path d="M40 74 Q60 56 80 74 Q60 92 40 74 Z" fill="url(#sclera)" stroke="#3d2d08" stroke-width="1"/>
+    <circle cx="60" cy="74" r="9" fill="url(#iris)"/><circle cx="60" cy="74" r="9" fill="none" stroke="#2a1604" stroke-width=".9"/>
+    <circle cx="60" cy="74" r="3.8" fill="#050302"/>
+    <ellipse cx="56.2" cy="70.4" rx="2.4" ry="1.6" fill="#fff" opacity=".9" transform="rotate(-25 56.2 70.4)"/>
+    <path d="M38 75 Q60 52 82 75" fill="none" stroke="url(#goldMetal)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M44 64 Q60 52 76 64" fill="none" stroke="#d4af37" stroke-width="1" opacity=".55" stroke-linecap="round"/>
+  </svg>`;
+}
+const EYE = eyeSVG();
+
+function sunSVG() {
+  let r = "";
+  for (let i = 0; i < 16; i++) {
+    const long = i % 2 === 0, a = i * 22.5 * Math.PI / 180, w = 0.2, R = long ? 11.6 : 9.8, r0 = 6;
+    r += `<polygon points="${pts([[12 + r0 * Math.cos(a - w), 12 + r0 * Math.sin(a - w)], [12 + R * Math.cos(a), 12 + R * Math.sin(a)], [12 + r0 * Math.cos(a + w), 12 + r0 * Math.sin(a + w)]])}" fill="url(#${long ? "gmLight" : "gmDark"})"/>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" filter="url(#gShadow)"><g stroke="#3d2d08" stroke-width=".25">${r}<circle cx="12" cy="12" r="5.2" fill="url(#goldRadial)"/></g></svg>`;
+}
+const SUN = sunSVG();
+const MOON = `<svg viewBox="0 0 24 24" aria-hidden="true" filter="url(#gShadow)"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="url(#goldRadial)" stroke="#3d2d08" stroke-width=".4"/><path d="M11.6 4.2A8 8 0 1 0 19.8 13" fill="none" stroke="#fff6c2" stroke-width=".5" opacity=".6"/></svg>`;
+
+/* Square and Compasses: tapered metal legs, pivot rivet, graduated square, shaded like polished gold */
+function emblemInner() {
+  const pv = [100, 26];
+  const leg = (tx, ty) => {
+    const q = taper(pv[0], pv[1], tx, ty, 10, 1.8);
+    return `<polygon points="${pts(q)}" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width=".8" stroke-linejoin="round"/>
+      <polyline points="${pts([q[0], q[1]])}" fill="none" stroke="#fff6c2" stroke-width=".9" opacity=".85"/>`;
+  };
+  // the square: apex down, arms at 45 degrees, thickness t
+  const t = 12, k = Math.SQRT1_2, A = [100, 186], L = 112;
+  const O = [A[0] - L * k, A[1] - L * k], I = [O[0] + t * k, O[1] - t * k], B = [100, A[1] - t * Math.SQRT2];
+  const O2 = [200 - O[0], O[1]], I2 = [200 - I[0], I[1]];
+  let ticks = "";
+  for (let n = 0, d = 6; d < 96; d += 6, n++) {
+    const len = n % 4 === 3 ? 6.5 : 4;
+    const pl = [B[0] - d * k, B[1] - d * k], pr = [B[0] + d * k, B[1] - d * k];
+    ticks += `<line x1="${f1(pl[0])}" y1="${f1(pl[1])}" x2="${f1(pl[0] - len * k)}" y2="${f1(pl[1] + len * k)}"/><line x1="${f1(pr[0])}" y1="${f1(pr[1])}" x2="${f1(pr[0] + len * k)}" y2="${f1(pr[1] + len * k)}"/>`;
+  }
+  return `<g filter="url(#gShadow)">
+    <polygon points="${pts([A, O, I, B, I2, O2])}" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width="1" stroke-linejoin="round"/>
+    <polyline points="${pts([I, B, I2])}" fill="none" stroke="#fff6c2" stroke-width="1" opacity=".75"/>
+    <polyline points="${pts([O, A, O2])}" fill="none" stroke="#5a4210" stroke-width="1.2" opacity=".7"/>
+    <g stroke="#3d2d08" stroke-width=".7" opacity=".85">${ticks}</g>
+    ${leg(46, 178)}${leg(154, 178)}
+    <path d="M67.5 120 Q100 138 132.5 120" fill="none" stroke="#3d2d08" stroke-width="4.6" stroke-linecap="round"/>
+    <path d="M67.5 120 Q100 138 132.5 120" fill="none" stroke="url(#goldMetal)" stroke-width="3.2" stroke-linecap="round"/>
+    <circle cx="100" cy="9" r="5.4" fill="none" stroke="#3d2d08" stroke-width="3.6"/><circle cx="100" cy="9" r="5.4" fill="none" stroke="url(#goldMetal)" stroke-width="2.2"/>
+    <circle cx="100" cy="26" r="12.5" fill="url(#goldRadial)" stroke="#3d2d08" stroke-width="1"/>
+    <circle cx="100" cy="26" r="8" fill="none" stroke="#7a5a14" stroke-width="1"/>
+    <circle cx="100" cy="26" r="3.4" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width=".7"/>
+    <circle cx="100" cy="100" r="17.5" fill="url(#darkDisc)" stroke="#3d2d08" stroke-width="3.4"/>
+    <circle cx="100" cy="100" r="17.5" fill="none" stroke="url(#goldMetal)" stroke-width="2.2"/>
+    <text x="100" y="108.5" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="25" font-weight="700" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width=".4">G</text>
+  </g>`;
+}
+const LOGO = `<svg viewBox="0 0 200 200" aria-hidden="true">${emblemInner()}</svg>`;
 const CREST = `<svg class="crest" viewBox="0 0 200 200" aria-label="Elgin Lodge No. 117 seal">
   <defs><path id="crestRing" d="M100 100 m-74 0 a74 74 0 1 1 148 0 a74 74 0 1 1 -148 0"/></defs>
-  <circle cx="100" cy="100" r="94" fill="#0a0803" stroke="#d4af37" stroke-width="4"/>
-  <circle cx="100" cy="100" r="86" fill="none" stroke="#8a6d1c" stroke-width="1.5"/>
-  <circle cx="100" cy="100" r="58" fill="none" stroke="#d4af37" stroke-width="2"/>
-  <text font-family="Georgia,serif" font-size="15" font-weight="700" letter-spacing="3.2" fill="#f6dc82"><textPath href="#crestRing" startOffset="0">ELGIN LODGE No. 117 · A.F. &amp; A.M. ·</textPath></text>
-  <g transform="translate(58 52) scale(.84)" fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M50 6 L16 90 M50 6 L84 90"/><path d="M26 66 Q50 80 74 66" stroke-width="3"/><path d="M50 94 L8 52 M50 94 L92 52"/>
-    <text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#f6dc82" stroke="none">G</text>
-  </g>
-</svg>`;
-const LOGO = `<svg viewBox="0 0 100 100" aria-hidden="true" fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M50 6 L16 90 M50 6 L84 90"/><path d="M26 66 Q50 80 74 66" stroke-width="3"/>
-  <path d="M50 94 L8 52 M50 94 L92 52"/>
-  <text x="50" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#f6dc82" stroke="none">G</text>
+  <circle cx="100" cy="100" r="95" fill="url(#goldMetal)" stroke="#3d2d08" stroke-width="1.5"/>
+  <circle cx="100" cy="100" r="88" fill="url(#darkDisc)" stroke="#3d2d08" stroke-width="1.2"/>
+  <circle cx="100" cy="100" r="84" fill="none" stroke="url(#goldMetal)" stroke-width="1.2"/>
+  <circle cx="100" cy="100" r="57" fill="none" stroke="url(#goldMetal)" stroke-width="2"/>
+  <text font-family="Georgia,serif" font-size="15" font-weight="700" letter-spacing="3.2" fill="url(#goldMetal)"><textPath href="#crestRing">ELGIN LODGE No. 117 · A.F. &amp; A.M. ·</textPath></text>
+  <g transform="translate(46 46) scale(.54)">${emblemInner()}</g>
 </svg>`;
 
 /* ---------- audio ---------- */
@@ -591,18 +677,6 @@ function loadSaved() { try { const r = localStorage.getItem(STORE_KEY); return r
 function clearSaved() { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
 
 /* ---------- state ---------- */
-function newGame(names) {
-  S = {
-    phase: "board",
-    teams: names.map(n => ({ name: n, score: 0 })),
-    control: 0,
-    used: {},
-    dd: `${rand(0, CATEGORIES.length - 1)}-${rand(1, 4)}`,   // Daily Double hides in rows 2-5
-    final: null
-  };
-  modal = null; save(); render();
-}
-
 function clueCount() { return Object.keys(S.used).length; }
 const totalClues = () => CATEGORIES.length * VALUES.length;
 
@@ -629,24 +703,16 @@ function render() {
 }
 
 function renderSetup() {
-  const saved = loadSaved();
   $app.innerHTML = `${header()}
-  <div class="setup"><div class="card">
+  <div class="setup"><div class="card" style="text-align:center">
     ${LOGO.replace("<svg ", '<svg class="emblem" ')}
-    <h2 style="text-align:center">Gather the Teams</h2>
-    <p class="sub" style="text-align:center">Two to four teams or players. Pass the gavel to whoever is first to pick.</p>
-    ${[0, 1, 2, 3].map(i => `<div class="field"><label for="t${i}">Team ${i + 1}</label>
-       <input id="t${i}" maxlength="22" placeholder="${i < 2 ? "Required" : "Optional"}" value="${["Senior Warden", "Junior Warden", "", ""][i]}"></div>`).join("")}
-    <div class="row-actions">
-      <button class="btn" data-act="start">Play on One Screen</button>
-      ${saved && saved.phase && saved.phase !== "lobby" ? `<button class="btn ghost" data-act="resume">Resume Saved Game</button>` : ""}
-    </div>
-    <div class="or-line">— or play online, up to 10 players —</div>
-    <div class="row-actions" style="margin-top:0">
-      <button class="btn ghost" data-act="hostonline">Host an Online Game</button>
+    <h2>Welcome to the Lodge</h2>
+    <p class="sub">One screen hosts the game. Everyone else joins from their own phone with a room code, up to 10 players.</p>
+    <div class="row-actions" style="justify-content:center;flex-direction:column;align-items:stretch">
+      <button class="btn" data-act="hostonline">Host a Game</button>
       <button class="btn ghost" data-act="joinform">Join with a Room Code</button>
     </div>
-    <p class="note">Questions use publicly available Masonic history, symbolism and lodge basics only. Nothing esoteric or ritual. Edit the question bank at the top of this file's script to make it your own.</p>
+    <p class="note">Questions use publicly available Masonic history, symbolism and lodge basics only. Nothing esoteric or ritual.</p>
   </div></div>`;
 }
 
@@ -890,12 +956,6 @@ document.addEventListener("click", e => {
   if (!el) return;
   const act = el.dataset.act, t = parseInt(el.dataset.t, 10);
   switch (act) {
-    case "start": {
-      const names = [0, 1, 2, 3].map(i => document.getElementById("t" + i).value.trim()).filter(Boolean);
-      if (names.length < 2) { alert("Please enter at least two team names."); return; }
-      newGame(names); break;
-    }
-    case "resume": S = loadSaved(); modal = null; if (S.mode === "online") S.mode = "local"; render(); break;
     case "hostonline": hostOnline(); break;
     case "joinform": closeNet(); NET.role = "join"; render(); break;
     case "joinsubmit": {
